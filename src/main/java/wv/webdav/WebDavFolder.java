@@ -1,3 +1,7 @@
+/*
+ * Copyright (c)  2022 Ward van der Veer.  Licensed under the Apache Licence.
+ */
+
 package wv.webdav;
 
 import com.fasterxml.jackson.dataformat.xml.XmlMapper;
@@ -6,17 +10,14 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.lang.NonNull;
-import org.springframework.util.MultiValueMap;
 import wv.webdav.jaxb.*;
 
 import java.io.ByteArrayOutputStream;
 import java.io.FileNotFoundException;
 
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.net.MalformedURLException;
+import java.util.*;
 
 public class WebDavFolder extends WebDavItem {
 
@@ -24,9 +25,14 @@ public class WebDavFolder extends WebDavItem {
     private Map<String, WebDavFile> files;
 
     public WebDavFolder(WebDavFolder parent, String name) {
-        super(parent, name);
+        super(parent, name, new Date());
         subFolders = new HashMap<>();
         files = new HashMap<>();
+    }
+
+    public void addFolder(WebDavFolder webDavFolder) {
+        subFolders.put(webDavFolder.name, webDavFolder);
+        webDavFolder.parent = this;
     }
 
     /**
@@ -65,15 +71,8 @@ public class WebDavFolder extends WebDavItem {
             XmlMapper xmlMapper = new XmlMapper();
 
             Multistatus ms = new Multistatus();
-            ms.setResponse(new Response());
-            ms.getResponse().setHref(reqUrl);
-            PropStat propStat = new PropStat();
-            propStat.setStatus("HTTP/1.1 200 OK");
-            Prop prop = new Prop();
-            CollectionResourceType resourceType = new CollectionResourceType();
-            prop.setResourceType(resourceType);
-            propStat.setProp(prop);
-            ms.getResponse().setPropStat(propStat);
+            ms.setResponse(buildPropFindResponses(reqUrl, depth));
+
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
             xmlMapper.writeValue(baos, ms);
             byte[] content = baos.toByteArray();
@@ -86,6 +85,37 @@ public class WebDavFolder extends WebDavItem {
         } catch (IOException e) {
             return buildError(HttpStatus.BAD_REQUEST.value(), e.getMessage());
         }
+    }
+
+    protected List<Response> buildPropFindResponses(String reqUrl, Depth depth) throws MalformedURLException {
+        List<Response> responses = new ArrayList<>();
+        if (!depth.isNoRoot()) {
+            responses.add(buildPropFindResponse(reqUrl));
+        }
+        if (depth != Depth.Zero) {
+            for (WebDavFolder wdFolder: subFolders.values()) {
+                if (depth == Depth.Infinity || depth == Depth.InfinityNoRoot) {
+                    responses.addAll(wdFolder.buildPropFindResponses(reqUrl, Depth.Infinity));
+                } else {
+                    responses.add(wdFolder.buildPropFindResponse(reqUrl));
+                }
+            }
+            for (WebDavFile wdFile: files.values()) {
+                responses.add(wdFile.buildPropFindResponse(reqUrl));
+            }
+        }
+        return responses;
+    }
+
+    @Override
+    protected Response buildPropFindResponse(String reqUrl) throws MalformedURLException {
+        Response response = super.buildPropFindResponse(reqUrl);
+
+        // mark as a collection
+        CollectionResourceType resourceType = new CollectionResourceType();
+        response.getPropStat().getProp().setResourceType(resourceType);
+
+        return response;
     }
 
     @NonNull

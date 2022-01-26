@@ -1,3 +1,7 @@
+/*
+ * Copyright (c)  2022 Ward van der Veer.  Licensed under the Apache Licence.
+ */
+
 package wv.webdav;
 
 import org.springframework.http.HttpMethod;
@@ -32,6 +36,10 @@ public class WebDavDrive extends WebDavFolder {
             drivePath = drivePath + "/";
         }
         this.drivePath = drivePath;
+    }
+
+    public String getDrivePath() {
+        return drivePath;
     }
 
     /**

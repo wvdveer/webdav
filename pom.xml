@@ -16,6 +16,7 @@
         <servlet.version>2.5</servlet.version>
         <jackson.version>2.13.1</jackson.version>
         <jaxb.version>2.3.0</jaxb.version>
+        <junit.version>5.8.2</junit.version>
     </properties>
 
     <dependencies>
@@ -72,6 +73,13 @@
             <groupId>com.sun.xml.bind</groupId>
             <artifactId>jaxb-impl</artifactId>
             <version>${jaxb.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <version>${junit.version}</version>
+            <scope>test</scope>
         </dependency>
 
     </dependencies>
