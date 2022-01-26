@@ -4,18 +4,24 @@
 
 package wv.webdav;
 
+import com.fasterxml.jackson.dataformat.xml.XmlMapper;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.lang.NonNull;
-import org.springframework.lang.Nullable;
+import wv.webdav.jaxb.Multistatus;
 import wv.webdav.jaxb.Prop;
 import wv.webdav.jaxb.PropStat;
 import wv.webdav.jaxb.Response;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.Date;
+import java.util.List;
 
 public abstract class WebDavItem {
 
@@ -41,7 +47,26 @@ public abstract class WebDavItem {
     }
 
     @NonNull
-    protected abstract ResponseEntity<byte[]> doPropFind(@NonNull String reqUrl, Depth depth, @Nullable Object body);
+    protected ResponseEntity<byte[]> doPropFind(String reqUrl, Depth depth, Object body) {
+        try {
+            XmlMapper xmlMapper = new XmlMapper();
+
+            Multistatus ms = new Multistatus();
+            ms.setResponse(buildPropFindResponses(reqUrl, depth));
+
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            xmlMapper.writeValue(baos, ms);
+            byte[] content = baos.toByteArray();
+            HttpHeaders hdrs = new HttpHeaders();
+            hdrs.put(HttpHeaders.CONTENT_TYPE, List.of(MediaType.TEXT_XML_VALUE));
+            hdrs.put(HttpHeaders.CONTENT_LENGTH, List.of(Integer.toString(content.length)));
+
+            return new ResponseEntity<>(content, hdrs, HttpStatus.OK);
+
+        } catch (IOException e) {
+            return buildError(HttpStatus.BAD_REQUEST.value(), e.getMessage());
+        }
+    }
 
     @NonNull
     protected abstract ResponseEntity<byte[]> doGet(@NonNull String reqUrl);
@@ -49,6 +74,10 @@ public abstract class WebDavItem {
     @NonNull
     protected ResponseEntity<byte[]> buildError(int errorCode, String errorMessage) {
         return ResponseEntity.status(errorCode).body(errorMessage.getBytes(StandardCharsets.UTF_8));
+    }
+
+    protected List<Response> buildPropFindResponses(String reqUrl, Depth depth) throws MalformedURLException {
+        return List.of(buildPropFindResponse(reqUrl));
     }
 
     @NonNull

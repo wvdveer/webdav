@@ -65,27 +65,6 @@ public class WebDavFolder extends WebDavItem {
         }
     }
 
-    @Override
-    protected ResponseEntity<byte[]> doPropFind(String reqUrl, Depth depth, Object body) {
-        try {
-            XmlMapper xmlMapper = new XmlMapper();
-
-            Multistatus ms = new Multistatus();
-            ms.setResponse(buildPropFindResponses(reqUrl, depth));
-
-            ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            xmlMapper.writeValue(baos, ms);
-            byte[] content = baos.toByteArray();
-            HttpHeaders hdrs = new HttpHeaders();
-            hdrs.put(HttpHeaders.CONTENT_TYPE, List.of(MediaType.TEXT_XML_VALUE));
-            hdrs.put(HttpHeaders.CONTENT_LENGTH, List.of(Integer.toString(content.length)));
-
-            return new ResponseEntity<>(content, hdrs, HttpStatus.OK);
-
-        } catch (IOException e) {
-            return buildError(HttpStatus.BAD_REQUEST.value(), e.getMessage());
-        }
-    }
 
     protected List<Response> buildPropFindResponses(String reqUrl, Depth depth) throws MalformedURLException {
         List<Response> responses = new ArrayList<>();
