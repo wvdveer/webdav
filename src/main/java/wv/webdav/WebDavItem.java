@@ -17,7 +17,7 @@ public abstract class WebDavItem {
         this.name = name;
     }
 
-    protected ResponseEntity<byte[]> routeRequest(String method, String reqUrl, int depth, Object body) {
+    protected ResponseEntity<byte[]> routeRequest(String method, String reqUrl, Depth depth, Object body) {
         switch (method) {
             case "PROPFIND":
                 return doPropFind(reqUrl, depth, body);
@@ -29,7 +29,7 @@ public abstract class WebDavItem {
     }
 
     @NonNull
-    protected abstract ResponseEntity<byte[]> doPropFind(@NonNull String reqUrl, int depth, @Nullable Object body);
+    protected abstract ResponseEntity<byte[]> doPropFind(@NonNull String reqUrl, Depth depth, @Nullable Object body);
 
     @NonNull
     protected abstract ResponseEntity<byte[]> doGet(@NonNull String reqUrl);

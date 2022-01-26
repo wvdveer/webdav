@@ -1,9 +1,12 @@
 package wv.webdav;
 
 import com.fasterxml.jackson.dataformat.xml.XmlMapper;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.lang.NonNull;
+import org.springframework.util.MultiValueMap;
 import wv.webdav.jaxb.*;
 
 import java.io.ByteArrayOutputStream;
@@ -12,6 +15,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class WebDavFolder extends WebDavItem {
@@ -56,7 +60,7 @@ public class WebDavFolder extends WebDavItem {
     }
 
     @Override
-    protected ResponseEntity<byte[]> doPropFind(String reqUrl, int depth, Object body) {
+    protected ResponseEntity<byte[]> doPropFind(String reqUrl, Depth depth, Object body) {
         try {
             XmlMapper xmlMapper = new XmlMapper();
 
@@ -70,12 +74,14 @@ public class WebDavFolder extends WebDavItem {
             prop.setResourceType(resourceType);
             propStat.setProp(prop);
             ms.getResponse().setPropStat(propStat);
-
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
-
             xmlMapper.writeValue(baos, ms);
+            byte[] content = baos.toByteArray();
+            HttpHeaders hdrs = new HttpHeaders();
+            hdrs.put(HttpHeaders.CONTENT_TYPE, List.of(MediaType.TEXT_XML_VALUE));
+            hdrs.put(HttpHeaders.CONTENT_LENGTH, List.of(Integer.toString(content.length)));
 
-            return ResponseEntity.ok(baos.toByteArray());
+            return new ResponseEntity<>(content, hdrs, HttpStatus.OK);
 
         } catch (IOException e) {
             return buildError(HttpStatus.BAD_REQUEST.value(), e.getMessage());
@@ -85,7 +91,7 @@ public class WebDavFolder extends WebDavItem {
     @NonNull
     protected ResponseEntity<byte[]> doGet(@NonNull String reqUrl) {
         // return the same content as PROPFIND
-        return doPropFind(reqUrl, 1, null);
+        return doPropFind(reqUrl, Depth.One, null);
     }
 
 }

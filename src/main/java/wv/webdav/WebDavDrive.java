@@ -15,7 +15,6 @@ import java.util.List;
 public class WebDavDrive extends WebDavFolder {
 
     public static final String DEPTH_HDR = "Depth";
-    public static final String DEPTH_INF = "infinity";
     public static final String PARENT_FLDR = "..";
 
     private String drivePath;
@@ -57,12 +56,9 @@ public class WebDavDrive extends WebDavFolder {
             itemPath = itemPathAsString.split("/");
             itemPath = gleanParentFolderReferences(itemPath);
         }
-        int depth = Integer.MAX_VALUE; // infinity
+        Depth depth = Depth.Infinity;
         if (req.getHeader(DEPTH_HDR) != null) {
-            String depthAsString = req.getHeader(DEPTH_HDR);
-            if (!depthAsString.equalsIgnoreCase(DEPTH_INF)) {
-                depth = Integer.parseInt(depthAsString);
-            }
+            depth = Depth.fromString(req.getHeader(DEPTH_HDR));
         }
         byte[] body = null;
         if (req.getContentLength() > 0) {
