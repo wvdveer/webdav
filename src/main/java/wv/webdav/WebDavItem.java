@@ -4,6 +4,7 @@
 
 package wv.webdav;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -50,7 +51,7 @@ public abstract class WebDavItem {
     protected ResponseEntity<byte[]> doPropFind(String reqUrl, Depth depth, Object body) {
         try {
             XmlMapper xmlMapper = new XmlMapper();
-
+            xmlMapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
             Multistatus ms = new Multistatus();
             ms.setResponse(buildPropFindResponses(reqUrl, depth));
 

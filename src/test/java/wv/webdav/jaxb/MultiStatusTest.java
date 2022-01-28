@@ -1,5 +1,6 @@
 package wv.webdav.jaxb;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 import org.junit.jupiter.api.Test;
 import org.springframework.util.Assert;
@@ -14,7 +15,7 @@ public class MultiStatusTest {
     @Test
     public void testMultiStatus() throws IOException {
         XmlMapper xmlMapper = new XmlMapper();
-
+        xmlMapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
         Multistatus ms = new Multistatus();
         ms.setResponse(List.of(new Response()));
         ms.getResponse().get(0).setHref("test");
@@ -32,6 +33,7 @@ public class MultiStatusTest {
 
         Assert.isTrue(content.contains("<response>"), "missing response");
         Assert.doesNotContain(content, "<response><response>", "incorrectly wrapped");
+        Assert.isTrue(content.contains("<collection/>"), "missing response");
     }
 
 }

@@ -4,18 +4,10 @@
 
 package wv.webdav;
 
-import com.fasterxml.jackson.dataformat.xml.XmlMapper;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.lang.NonNull;
 import wv.webdav.jaxb.*;
-
-import java.io.ByteArrayOutputStream;
 import java.io.FileNotFoundException;
-
-import java.io.IOException;
 import java.net.MalformedURLException;
 import java.util.*;
 
@@ -24,15 +16,29 @@ public class WebDavFolder extends WebDavItem {
     private Map<String, WebDavFolder> subFolders;
     private Map<String, WebDavFile> files;
 
+    /**
+     * Create a new WebDAV folder
+     *
+     * @param parent the parent folder of the folder to create
+     * @param name the name to assign to the created folder
+     */
     public WebDavFolder(WebDavFolder parent, String name) {
         super(parent, name, new Date());
         subFolders = new HashMap<>();
         files = new HashMap<>();
+        if (parent != null) {
+            parent.addFolder(this);
+        }
     }
 
-    public void addFolder(WebDavFolder webDavFolder) {
+    protected void addFolder(WebDavFolder webDavFolder) {
         subFolders.put(webDavFolder.name, webDavFolder);
         webDavFolder.parent = this;
+    }
+
+    protected void addFile(WebDavFile webDavFile) {
+        files.put(webDavFile.name, webDavFile);
+        webDavFile.parent = this;
     }
 
     /**

@@ -4,5 +4,5 @@
 
 package wv.webdav;
 
-public class WebDavException {
+public class WebDavException extends Exception {
 }
